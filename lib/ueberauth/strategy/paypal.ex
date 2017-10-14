@@ -20,6 +20,7 @@ defmodule Ueberauth.Strategy.Paypal do
   end
 
   def handle_callback!(%Plug.Conn{params: %{"code" => code}} = conn) do
+    conn = put_session(conn, :redirect_url, conn.params["redirect_url"] || "/")
     options = [redirect_uri: callback_url(conn)]
     token = Paypal.OAuth.get_token!([code: code], options)
     handle_token(token, conn)
