@@ -11,6 +11,7 @@ defmodule Ueberauth.Strategy.Paypal do
 
   #übearauth callbacks
   def handle_request!(conn) do
+    conn = put_session(conn, :redirect_url, conn.params["redirect_url"])
     authorize_url = conn.params
     |> Enum.map(fn {k,v} -> {String.to_existing_atom(k), v} end)
     |> Keyword.put(:redirect_uri, callback_url(conn))
@@ -20,7 +21,6 @@ defmodule Ueberauth.Strategy.Paypal do
   end
 
   def handle_callback!(%Plug.Conn{params: %{"code" => code}} = conn) do
-    conn = put_session(conn, :redirect_url, conn.params["redirect_url"] || "/")
     options = [redirect_uri: callback_url(conn)]
     token = Paypal.OAuth.get_token!([code: code], options)
     handle_token(token, conn)
