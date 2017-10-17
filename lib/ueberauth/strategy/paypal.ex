@@ -12,6 +12,7 @@ defmodule Ueberauth.Strategy.Paypal do
   #übearauth callbacks
   def handle_request!(conn) do
     conn = put_session(conn, :redirect_url, conn.params["redirect_url"])
+           |> put_session(:user, Guardian.Plug.current_resource(conn))
     authorize_url = conn.params
     |> Enum.map(fn {k,v} -> {String.to_existing_atom(k), v} end)
     |> Keyword.put(:redirect_uri, callback_url(conn))
