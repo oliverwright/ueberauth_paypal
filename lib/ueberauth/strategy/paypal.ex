@@ -9,11 +9,21 @@ defmodule Ueberauth.Strategy.Paypal do
   alias Ueberauth.Auth.Extra
   alias Ueberauth.Strategy.Paypal
 
-  #übearauth callbacks
+  #Überauth callbacks
   def handle_request!(conn) do
     conn = put_session(conn, :redirect_url, conn.params["redirect_url"])
            |> put_session(:user, Guardian.Plug.current_resource(conn))
-    authorize_url = conn.params
+    auth_token = conn.params["auth_token"]
+    if auth_token do
+      case Guardian.decode_and_verify(auth_token) do
+        { :ok, claims } ->
+          case Guardian.serializer.from_token(Map.get(claims, "sub")) do
+            { :ok, resource } -> conn = put_session(conn, :user, resource)
+          end
+      end
+    end
+
+    authorize_url = Map.delete(conn.params, "auth_token")
     |> Enum.map(fn {k,v} -> {String.to_existing_atom(k), v} end)
     |> Keyword.put(:redirect_uri, callback_url(conn))
     |> Paypal.OAuth.authorize_url!
